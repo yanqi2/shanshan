@@ -1,0 +1,55 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Typecontent=" text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-theme.min.css">
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/static/js/main.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row" style="margin-top: 15px;">
+            <div class="col-xs-12">
+                <a href="index.html">
+                    <span class="glyphicon glyphicon-arrow-left" aria-hidden="true" style="font-size: 28px;"></span>
+                </a>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 15px;">
+            <div class="panel panel-default">
+                <!-- Default panel contents -->
+                <div class="panel-heading">历史记录</div>
+                <!-- Table -->
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>明细</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    var host = "http://api.shanshan.com:8081/";
+
+    $(function () {
+        $.get(host + "operation/list?page=1&size=10000", function (data) {
+            console.log(data);
+            $.each(data, function (i, val) {
+                $("tbody").append('<tr><th scope = "row">' + (i + 1) + '</th><td>' + val['msg'] + '</td></tr>')
+            });
+        });
+    });
+</script>
+
+</html>

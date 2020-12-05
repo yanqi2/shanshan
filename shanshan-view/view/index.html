@@ -1,0 +1,240 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Typecontent=" text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-theme.min.css">
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/static/js/main.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row" style="margin-top: 60px;">
+            <div class="col-xs-9">
+                <span style="font-size:30px;">总分：<span id="total">0</span></span>
+            </div>
+            <div class="col-xs-3">
+                <a href="history.html">
+                    <span style="font-size:18px;">历史记录</span>
+                </a>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-xs-6"><span style="font-size:22px;">增加：<span id="add">0</span></span></div>
+            <div class="col-xs-6"><span style="font-size:22px;">消耗：<span id="sub">0</span></span></div>
+        </div>
+
+        <ul class="list-group" id="options" style="margin-top: 50px;text-align: center;">
+        </ul>
+    </div>
+
+    <div class="row navbar-fixed-bottom">
+        <div class="col-xs-9"></div>
+        <div class="col-xs-3">
+            <button class="btn-success" data-toggle="modal" data-target="#manageModal">
+                新增
+            </button>
+        </div>
+    </div>
+
+    <div class="modal fade" id="manageModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class=" modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="modal-title">新增/修改</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <input type="hidden" class="form-control" id="id">
+                        </div>
+                        <div class="form-group">
+                            <label for="title" class="control-label">标题:</label>
+                            <input type="text" class="form-control" id="title">
+                        </div>
+                        <div class="form-group">
+                            <label for="score" class="control-label">分数:</label>
+                            <input type="text" class="form-control" id="score">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="btn-save">保存</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+</body>
+<script>
+    var host = "http://121.37.255.20:8081/";
+
+    $(function () {
+        $.get(host + "user/score", function (data) {
+            $("#total").text(data['total']);
+            $("#add").text(data['add']);
+            $("#sub").text(data['sub']);
+        });
+
+        $.get(host + "option/list", function (data) {
+            $.each(data, function (i, val) {
+                var score = val['score'] > 0 ? "+" + val['score'] : val['score'];
+                console.log(score);
+                if (i % 2 === 0) {
+                    // 偶數
+                    var text = '<li class="list-group-item list-group-item-warning"><span onclick="operate(' + val['id'] + ')">' + val['title'] + ' ' + score + '</span><span style="float:right;"><span class="glyphicon glyphicon-minus" aria-hidden="true" style="color:red;" onclick="del_option(' + val['id'] + ')"></span><span class="glyphicon glyphicon-pencil" aria-hidden="true" style="color:green;margin-left:15px;" data-toggle="modal" data-target="#manageModal" data-id="' + val['id'] + '" data-title="' + val['title'] + '" data-score="' + val['score'] + '"></span></span></li>';
+                    $("#options").append(text);
+                } else {
+                    // 奇數
+                    var text = '<li class="list-group-item list-group-item-info"><span onclick="operate(' + val['id'] + ')">' + val['title'] + ' ' + score + '</span><span style="float:right;"><span class="glyphicon glyphicon-minus" aria-hidden="true" style="color:red;" onclick="del_option(' + val['id'] + ')"></span><span class="glyphicon glyphicon-pencil" aria-hidden="true" style="color:green;margin-left:15px;" data-toggle="modal" data-target="#manageModal" data-id="' + val['id'] + '" data-title="' + val['title'] + '" data-score="' + val['score'] + '"></span></span></li>';
+                    $("#options").append(text);
+                }
+            });
+            console.log(data);
+        });
+
+        $('#manageModal').on('show.bs.modal', function (event) {
+            var span = $(event.relatedTarget);
+            var id = span.data('id');
+            console.log(id);
+            var title = span.data('title');
+            console.log(title);
+            var score = span.data('score');
+            console.log(score);
+            var modal = $(this);
+            modal.find('#id').val(id);
+            modal.find('#title').val(title);
+            modal.find('#score').val(score);
+
+            if (id) {
+                modal.find('#modal-title').text("修改");
+            } else {
+                modal.find('#modal-title').text("新增");
+            }
+        })
+
+        $("#btn-save").click(function () {
+            var id = $("#id").val();
+            var title = $("#title").val();
+            var score = $("#score").val();
+            console.log(score);
+            if (id) {
+                $.post(host + "option/update", JSON.stringify({ id: id, title: title, score: score }), function (succ) {
+                    if (succ) {
+                        alert("成功");
+                        $("#options").html("");
+                        $.get(host + "option/list", function (data) {
+                            $.each(data, function (i, val) {
+                                var score = val['score'] > 0 ? "+" + val['score'] : val['score'];
+                                console.log(score);
+                                if (i % 2 === 0) {
+                                    // 偶數
+                                    var text = '<li class="list-group-item list-group-item-warning"><span onclick="operate(' + val['id'] + ')">' + val['title'] + ' ' + score + '</span><span style="float:right;"><span class="glyphicon glyphicon-minus" aria-hidden="true" style="color:red;" onclick="del_option(' + val['id'] + ')"></span><span class="glyphicon glyphicon-pencil" aria-hidden="true" style="color:green;margin-left:15px;" data-toggle="modal" data-target="#manageModal" data-id="' + val['id'] + '" data-title="' + val['title'] + '" data-score="' + val['score'] + '"></span></span></li>';
+                                    $("#options").append(text);
+                                } else {
+                                    // 奇數
+                                    var text = '<li class="list-group-item list-group-item-info"><span onclick="operate(' + val['id'] + ')">' + val['title'] + ' ' + score + '</span><span style="float:right;"><span class="glyphicon glyphicon-minus" aria-hidden="true" style="color:red;" onclick="del_option(' + val['id'] + ')"></span><span class="glyphicon glyphicon-pencil" aria-hidden="true" style="color:green;margin-left:15px;" data-toggle="modal" data-target="#manageModal" data-id="' + val['id'] + '" data-title="' + val['title'] + '" data-score="' + val['score'] + '"></span></span></li>';
+                                    $("#options").append(text);
+                                }
+                            });
+                            console.log(data);
+                        });
+                    } else {
+                        alert("失败");
+                    }
+                });
+            } else {
+                $.ajax({
+                    method: "post",
+                    url: host + "option/add",
+                    contentType: "application/json",
+                    data: JSON.stringify({ title: title, score: score }),
+                    success: function (succ) {
+                        if (succ) {
+                            alert("成功");
+                            $("#title").val("");
+                            $("#score").val("");
+                            $("#options").html("");
+                            $.get(host + "option/list", function (data) {
+                                $.each(data, function (i, val) {
+                                    var score = val['score'] > 0 ? "+" + val['score'] : val['score'];
+                                    console.log(score);
+                                    if (i % 2 === 0) {
+                                        // 偶數
+                                        var text = '<li class="list-group-item list-group-item-warning"><span onclick="operate(' + val['id'] + ')">' + val['title'] + ' ' + score + '</span><span style="float:right;"><span class="glyphicon glyphicon-minus" aria-hidden="true" style="color:red;" onclick="del_option(' + val['id'] + ')"></span><span class="glyphicon glyphicon-pencil" aria-hidden="true" style="color:green;margin-left:15px;" data-toggle="modal" data-target="#manageModal" data-id="' + val['id'] + '" data-title="' + val['title'] + '" data-score="' + val['score'] + '"></span></span></li>';
+                                        $("#options").append(text);
+                                    } else {
+                                        // 奇數
+                                        var text = '<li class="list-group-item list-group-item-info"><span onclick="operate(' + val['id'] + ')">' + val['title'] + ' ' + score + '</span><span style="float:right;"><span class="glyphicon glyphicon-minus" aria-hidden="true" style="color:red;" onclick="del_option(' + val['id'] + ')"></span><span class="glyphicon glyphicon-pencil" aria-hidden="true" style="color:green;margin-left:15px;" data-toggle="modal" data-target="#manageModal" data-id="' + val['id'] + '" data-title="' + val['title'] + '" data-score="' + val['score'] + '"></span></span></li>';
+                                        $("#options").append(text);
+                                    }
+                                });
+                                console.log(data);
+                            });
+                        } else {
+                            alert("失败");
+                        }
+                    }
+                });
+            }
+        });
+    });
+
+    function operate(id) {
+        var txt = prompt("备注信息", "");
+        if (txt || txt === "") {
+            $.post(host + "operate" + "?id=" + id + "&txt=" + txt, function (succ) {
+                if (succ) {
+                    alert("成功");
+                    $.get(host + "user/score", function (data) {
+                        $("#total").text(data['total']);
+                        $("#add").text(data['add']);
+                        $("#sub").text(data['sub']);
+                    });
+                } else {
+                    alert("失败");
+                }
+            });
+        } else {
+
+        }
+    }
+
+    function del_option(id) {
+        var cmf = confirm("确定删除？");
+        if (cmf) {
+            $.post(host + "option/delete?id=" + id, function (succ) {
+                if (succ) {
+                    alert("成功");
+                    $("#options").html("");
+                    $.get(host + "option/list", function (data) {
+                        $.each(data, function (i, val) {
+                            var score = val['score'] > 0 ? "+" + val['score'] : val['score'];
+                            console.log(score);
+                            if (i % 2 === 0) {
+                                // 偶數
+                                var text = '<li class="list-group-item list-group-item-warning"><span onclick="operate(' + val['id'] + ')">' + val['title'] + ' ' + score + '</span><span style="float:right;"><span class="glyphicon glyphicon-minus" aria-hidden="true" style="color:red;" onclick="del_option(' + val['id'] + ')"></span><span class="glyphicon glyphicon-pencil" aria-hidden="true" style="color:green;margin-left:15px;" data-toggle="modal" data-target="#manageModal" data-id="' + val['id'] + '" data-title="' + val['title'] + '" data-score="' + val['score'] + '"></span></span></li>';
+                                $("#options").append(text);
+                            } else {
+                                // 奇數
+                                var text = '<li class="list-group-item list-group-item-info"><span onclick="operate(' + val['id'] + ')">' + val['title'] + ' ' + score + '</span><span style="float:right;"><span class="glyphicon glyphicon-minus" aria-hidden="true" style="color:red;" onclick="del_option(' + val['id'] + ')"></span><span class="glyphicon glyphicon-pencil" aria-hidden="true" style="color:green;margin-left:15px;" data-toggle="modal" data-target="#manageModal" data-id="' + val['id'] + '" data-title="' + val['title'] + '" data-score="' + val['score'] + '"></span></span></li>';
+                                $("#options").append(text);
+                            }
+                        });
+                        console.log(data);
+                    });
+                } else {
+                    alert("失败");
+                }
+            });
+        }
+    }
+</script>
+
+
+</html>
